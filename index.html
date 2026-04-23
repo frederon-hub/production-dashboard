@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微组装组件生产线看板系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --industrial-dark: #0a1628;
+            --industrial-blue: #1a3a5c;
+            --industrial-light: #2a5a8c;
+            --industrial-accent: #00b4d8;
+            --industrial-success: #00d68f;
+            --industrial-warning: #ffaa00;
+            --industrial-danger: #ff3d71;
+            --industrial-text: #e4e9f0;
+            --industrial-muted: #8f9bb3;
+            --card-bg: rgba(26, 58, 92, 0.6);
+            --card-border: rgba(0, 180, 216, 0.3);
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--industrial-dark) 0%, #0d2137 50%, var(--industrial-dark) 100%);
+            color: var(--industrial-text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 头部 */
+        .header {
+            background: linear-gradient(90deg, var(--industrial-blue), var(--industrial-light), var(--industrial-blue));
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--industrial-accent);
+            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.2);
+        }
+        
+        .header-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #fff, var(--industrial-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .header-info {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .header-time {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: var(--industrial-accent);
+        }
+        
+        .header-date {
+            font-size: 14px;
+            color: var(--industrial-muted);
+        }
+        
+        /* 主容器 */
+        .main-container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto auto auto auto;
+            gap: 15px;
+            max-width: 1920px;
+            margin: 0 auto;
+        }
+        
+        /* 卡片通用样式 */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 180, 216, 0.2);
+        }
+        
+        .card-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--industrial-accent);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--card-border);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* KPI 卡片 */
+        .kpi-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+        
+        .kpi-card {
+            text-align: center;
+            padding: 20px 15px;
+        }
+        
+        .kpi-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .kpi-label {
+            font-size: 12px;
+            color: var(--industrial-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .kpi-trend {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .kpi-trend.up { color: var(--industrial-success); }
+        .kpi-trend.down { color: var(--industrial-danger); }
+        
+        /* 订单状态 */
+        .order-section {
+            grid-column: 1 / 5;
+            grid-row: 2 / 4;
+        }
+        
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .order-table th {
+            background: var(--industrial-blue);
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 500;
+            color: var(--industrial-accent);
+            border-bottom: 2px solid var(--industrial-accent);
+        }
+        
+        .order-table td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 180, 216, 0.1);
+        }
+        
+        .order-table tr:hover {
+            background: rgba(0, 180, 216, 0.1);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .status-completed { background: var(--industrial-success); color: #000; }
+        .status-progress { background: var(--industrial-accent); color: #000; }
+        .status-pending { background: var(--industrial-warning); color: #000; }
+        .status-paused { background: var(--industrial-danger); color: #fff; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--industrial-accent), var(--industrial-success));
+            transition: width 0.5s ease;
+        }
+        
+        /* 工序直通率 */
+        .process-section {
+            grid-column: 5 / 9;
+            grid-row: 2 / 3;
+        }
+        
+        /* 设备利用率 */
+        .device-section {
+            grid-column: 9 / 13;
+            grid-row: 2 / 3;
+        }
+        
+        /* 图表区域 */
+        .chart-container {
+            width: 100%;
+            height: 200px;
+        }
+        
+        /* 生产趋势 */
+        .trend-section {
+            grid-column: 5 / 9;
+            grid-row: 3 / 4;
+        }
+        
+        /* 设备状态 */
+        .device-status-section {
+            grid-column: 9 / 13;
+            grid-row: 3 / 4;
+        }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .device-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 10px;
+        }
+        
+        .device-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .device-util {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .device-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        
+        .status-running { background: var(--industrial-success); }
+        .status-idle { background: var(--industrial-warning); }
+        .status-fault { background: var(--industrial-danger); }
+        .status-maintain { background: var(--industrial-muted); }
+        
+        /* 底部统计 */
+        .bottom-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        
+        /* 员工排行 */
+        .employee-section {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .employee-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 180, 216, 0.1);
+        }
+        
+        .employee-rank {
+            width: 24px;
+            height: 24px;
+            background: var(--industrial-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #000;
+            margin-right: 10px;
+        }
+        
+        .employee-name {
+            flex: 1;
+        }
+        
+        .employee-output {
+            font-family: 'Orbitron', monospace;
+            color: var(--industrial-success);
+        }
+        
+        /* AI 对话框 */
+        .ai-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--industrial-accent), var(--industrial-light));
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .ai-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .ai-modal {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 400px;
+            height: 500px;
+            background: var(--industrial-dark);
+            border: 1px solid var(--industrial-accent);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            flex-direction: column;
+        }
+        
+        .ai-modal.active {
+            display: flex;
+        }
+        
+        .ai-header {
+            padding: 15px;
+            background: var(--industrial-blue);
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            color: var(--industrial-accent);
+        }
+        
+        .ai-close {
+            background: none;
+            border: none;
+            color: var(--industrial-text);
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .ai-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .ai-message {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+        }
+        
+        .ai-message.user {
+            background: var(--industrial-accent);
+            color: #000;
+            margin-left: auto;
+        }
+        
+        .ai-message.bot {
+            background: var(--industrial-blue);
+            border: 1px solid var(--card-border);
+        }
+        
+        .ai-input-area {
+            padding: 15px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .ai-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 10px;
+            color: var(--industrial-text);
+            font-size: 14px;
+        }
+        
+        .ai-input:focus {
+            outline: none;
+            border-color: var(--industrial-accent);
+        }
+        
+        .ai-send {
+            padding: 10px 20px;
+            background: var(--industrial-accent);
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .ai-send:hover {
+            background: var(--industrial-success);
+        }
+        
+        /* 文件上传 */
+        .upload-section {
+            grid-column: 1 / 5;
+            grid-row: 4 / 5;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--card-border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--industrial-accent);
+            background: rgba(0, 180, 216, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--industrial-dark);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--industrial-accent);
+            border-radius: 3px;
+        }
+        
+        /* 动画 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            animation: slideIn 0.5s ease forwards;
+        }
+    
+        /* ===== 手机适配 ===== */
+        @media screen and (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+            
+            .header {
+                flex-direction: column;
+                padding: 12px 15px;
+                gap: 10px;
+            }
+            
+            .header-title {
+                font-size: 16px;
+                letter-spacing: 1px;
+                text-align: center;
+                width: 100%;
+            }
+            
+            .header-info {
+                width: 100%;
+                justify-content: center;
+                gap: 15px;
+            }
+            
+            .header-time {
+                font-size: 18px;
+            }
+            
+            .main-container {
+                padding: 10px;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            /* KPI 单列布局 */
+            .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .kpi-card {
+                padding: 12px 8px;
+            }
+            
+            .kpi-value {
+                font-size: 22px;
+            }
+            
+            .kpi-label {
+                font-size: 10px;
+            }
+            
+            /* 所有区域单列 */
+            .order-section,
+            .process-section,
+            .device-section,
+            .trend-section,
+            .device-status-section,
+            .employee-section,
+            .product-section,
+            .defect-section {
+                grid-column: 1 !important;
+                grid-row: auto !important;
+            }
+            
+            /* 订单表格简化 */
+            .order-table {
+                font-size: 11px;
+            }
+            
+            .order-table th,
+            .order-table td {
+                padding: 6px 4px;
+            }
+            
+            /* 设备网格双列 */
+            .device-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            /* 图表高度 */
+            .chart-container {
+                height: 150px;
+            }
+            
+            /* 隐藏次要元素 */
+            .upload-section {
+                display: none !important;
+            }
+            
+            /* AI按钮 */
+            .ai-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .ai-modal {
+                width: 95vw;
+                height: 70vh;
+                bottom: 10px;
+                right: 2.5vw;
+                left: 2.5vw;
+            }
+        }
+        
+        /* 超小屏幕 (< 480px) */
+        @media screen and (max-width: 480px) {
+            .header-title {
+                font-size: 14px;
+            }
+            
+            .kpi-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .kpi-value {
+                font-size: 18px;
+            }
+            
+            .card {
+                padding: 10px;
+            }
+            
+            .card-title {
+                font-size: 12px;
+            }
+            
+            .order-table th:nth-child(4),
+            .order-table th:nth-child(5),
+            .order-table td:nth-child(4),
+            .order-table td:nth-child(5) {
+                display: none;
+            }
+            
+            .device-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            
+            .chart-container {
+                height: 120px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header class="header">
+        <h1 class="header-title">微组装组件生产线看板</h1>
+        <div class="header-info">
+            <div>
+                <div class="header-time" id="current-time">00:00:00</div>
+                <div class="header-date" id="current-date">2026年04月22日 星期三</div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 主容器 -->
+    <main class="main-container">
+        <!-- KPI 指标行 -->
+        <div class="kpi-row">
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-success);" id="kpi-today-output">8,560</div>
+                <div class="kpi-label">今日完工数</div>
+                <div class="kpi-trend up">↑ 5.2%</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-accent);" id="kpi-month-output">156,800</div>
+                <div class="kpi-label">本月完工数</div>
+                <div class="kpi-trend up">↑ 12.5%</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-success);" id="kpi-pass-rate">97.2%</div>
+                <div class="kpi-label">平均直通率</div>
+                <div class="kpi-trend up">↑ 0.5%</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-accent);" id="kpi-device-rate">89.5%</div>
+                <div class="kpi-label">设备稼动率</div>
+                <div class="kpi-trend up">↑ 1.2%</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-warning);" id="kpi-orders">38</div>
+                <div class="kpi-label">在制订单</div>
+                <div class="kpi-trend down">↓ 3</div>
+            </div>
+            <div class="card kpi-card">
+                <div class="kpi-value" style="color: var(--industrial-danger);" id="kpi-exceptions">3</div>
+                <div class="kpi-label">今日异常</div>
+                <div class="kpi-trend down">↓ 12.5%</div>
+            </div>
+        </div>
+        
+        <!-- 订单状态表 -->
+        <div class="card order-section">
+            <div class="card-title">📋 订单完成情况</div>
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>产品</th>
+                        <th>客户</th>
+                        <th>进度</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="order-table-body">
+                    <!-- 动态填充 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 工序直通率 -->
+        <div class="card process-section">
+            <div class="card-title">📊 各工序一次直通率</div>
+            <div class="chart-container" id="process-chart"></div>
+        </div>
+        
+        <!-- 设备利用率饼图 -->
+        <div class="card device-section">
+            <div class="card-title">⚙️ 设备利用率分布</div>
+            <div class="chart-container" id="device-pie-chart"></div>
+        </div>
+        
+        <!-- 生产趋势 -->
+        <div class="card trend-section">
+            <div class="card-title">📈 近7日生产趋势</div>
+            <div class="chart-container" id="trend-chart"></div>
+        </div>
+        
+        <!-- 设备状态网格 -->
+        <div class="card device-status-section">
+            <div class="card-title">🔧 设备实时状态</div>
+            <div class="device-grid" id="device-grid">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+        
+        <!-- 底部统计行 -->
+        <div class="bottom-row">
+            <div class="card">
+                <div class="card-title">🏆 员工产量排行</div>
+                <div class="employee-section" id="employee-list">
+                    <!-- 动态填充 -->
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📦 产品类型分布</div>
+                <div class="chart-container" id="product-chart"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📉 不良原因分析</div>
+                <div class="chart-container" id="defect-chart"></div>
+            </div>
+            <div class="card upload-section">
+                <div class="card-title">📁 数据更新</div>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📤</div>
+                    <div>点击或拖拽Excel文件到此处</div>
+                    <div style="font-size: 12px; color: var(--industrial-muted); margin-top: 5px;">支持 .xlsx, .xls 格式</div>
+                </div>
+                <input type="file" id="file-input" accept=".xlsx,.xls">
+                <div id="file-status" style="margin-top: 10px; font-size: 12px; color: var(--industrial-success);"></div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- AI 对话按钮 -->
+    <button class="ai-button" id="ai-toggle">🤖</button>
+    
+    <!-- AI 对话框 -->
+    <div class="ai-modal" id="ai-modal">
+        <div class="ai-header">
+            <span class="ai-title">智能问答助手</span>
+            <button class="ai-close" id="ai-close">×</button>
+        </div>
+        <div class="ai-messages" id="ai-messages">
+            <div class="ai-message bot">
+                您好！我是生产线智能助手，可以回答关于生产数据、订单状态、设备运行等问题。请问有什么可以帮您？
+            </div>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" class="ai-input" id="ai-input" placeholder="输入您的问题...">
+            <button class="ai-send" id="ai-send">发送</button>
+        </div>
+    </div>
+    
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        // 全局数据存储
+        // ═══════════════════════════════════════════════════════════
+        let productionData = {
+            orders: [],
+            processes: [],
+            devices: [],
+            daily: [],
+            employees: [],
+            summary: {}
+        };
+        
+        // ═══════════════════════════════════════════════════════════
+        // 模拟数据（初始数据，可被Excel覆盖）
+        // ═══════════════════════════════════════════════════════════
+        const mockOrders = [
+            {id: 'ORD-2026-1001', product: '精密连接器A型', customer: '华为技术', progress: 100, status: 'completed'},
+            {id: 'ORD-2026-1002', product: '传感器模块', customer: '中兴通讯', progress: 85, status: 'progress'},
+            {id: 'ORD-2026-1003', product: '控制板组件', customer: '比亚迪电子', progress: 62, status: 'progress'},
+            {id: 'ORD-2026-1004', product: '电源模块', customer: '立讯精密', progress: 45, status: 'progress'},
+            {id: 'ORD-2026-1005', product: '显示屏组件', customer: '歌尔股份', progress: 30, status: 'pending'},
+            {id: 'ORD-2026-1006', product: '微型继电器', customer: '蓝思科技', progress: 100, status: 'completed'},
+            {id: 'ORD-2026-1007', product: '摄像头模组', customer: '京东方', progress: 78, status: 'progress'},
+            {id: 'ORD-2026-1008', product: '天线组件', customer: '富士康', progress: 15, status: 'pending'},
+            {id: 'ORD-2026-1009', product: '滤波器', customer: '瑞声科技', progress: 100, status: 'completed'},
+            {id: 'ORD-2026-1010', product: '电感器', customer: '欧菲光', progress: 55, status: 'progress'},
+        ];
+        
+        const mockProcesses = [
+            {name: '来料检验', rate: 98.5},
+            {name: 'SMT贴片', rate: 97.8},
+            {name: '回流焊接', rate: 99.2},
+            {name: 'AOI检测', rate: 98.9},
+            {name: '点胶固化', rate: 97.5},
+            {name: '组装测试', rate: 96.8},
+            {name: '功能测试', rate: 98.2},
+            {name: '包装入库', rate: 99.5},
+        ];
+        
+        const mockDevices = [
+            {id: 'EQ001', name: 'SMT贴片机-1', status: 'running', util: 94},
+            {id: 'EQ002', name: 'SMT贴片机-2', status: 'running', util: 91},
+            {id: 'EQ003', name: '回流焊炉-1', status: 'running', util: 96},
+            {id: 'EQ004', name: 'AOI检测机-1', status: 'running', util: 92},
+            {id: 'EQ005', name: 'AOI检测机-2', status: 'idle', util: 77},
+            {id: 'EQ006', name: '点胶机-1', status: 'running', util: 88},
+            {id: 'EQ007', name: '点胶机-2', status: 'fault', util: 50},
+            {id: 'EQ008', name: '组装机器人-1', status: 'running', util: 95},
+            {id: 'EQ009', name: '功能测试机-1', status: 'running', util: 85},
+            {id: 'EQ010', name: '功能测试机-2', status: 'maintain', util: 67},
+            {id: 'EQ011', name: '自动包装机-1', status: 'running', util: 98},
+            {id: 'EQ012', name: '激光打标机-1', status: 'running', util: 93},
+        ];
+        
+        const mockDailyData = [
+            {date: '04-16', plan: 1200, actual: 1180},
+            {date: '04-17', plan: 1200, actual: 1220},
+            {date: '04-18', plan: 1200, actual: 1150},
+            {date: '04-19', plan: 1200, actual: 1280},
+            {date: '04-20', plan: 1200, actual: 1190},
+            {date: '04-21', plan: 1200, actual: 1250},
+            {date: '04-22', plan: 1200, actual: 1230},
+        ];
+        
+        const mockEmployees = [
+            {rank: 1, name: '张伟', output: 186},
+            {rank: 2, name: '李明', output: 178},
+            {rank: 3, name: '王芳', output: 172},
+            {rank: 4, name: '刘洋', output: 165},
+            {rank: 5, name: '陈静', output: 158},
+        ];
+        
+        // ═══════════════════════════════════════════════════════════
+        // 初始化
+        // ═══════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 使用模拟数据初始化
+            productionData.orders = mockOrders;
+            productionData.processes = mockProcesses;
+            productionData.devices = mockDevices;
+            productionData.daily = mockDailyData;
+            productionData.employees = mockEmployees;
+            
+            renderAll();
+            initCharts();
+            initAI();
+            initFileUpload();
+        });
+        
+        // ═══════════════════════════════════════════════════════════
+        // 时间更新
+        // ═══════════════════════════════════════════════════════════
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleTimeString('zh-CN', {hour12: false});
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            document.getElementById('current-date').textContent = 
+                now.toLocaleDateString('zh-CN', {year: 'numeric', month: 'long', day: 'numeric'}) + ' ' + weekdays[now.getDay()];
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // 渲染所有组件
+        // ═══════════════════════════════════════════════════════════
+        function renderAll() {
+            renderOrderTable();
+            renderDeviceGrid();
+            renderEmployeeList();
+        }
+        
+        function renderOrderTable() {
+            const tbody = document.getElementById('order-table-body');
+            tbody.innerHTML = productionData.orders.map(order => {
+                const statusClass = {
+                    'completed': 'status-completed',
+                    'progress': 'status-progress',
+                    'pending': 'status-pending',
+                    'paused': 'status-paused'
+                }[order.status] || 'status-progress';
+                
+                const statusText = {
+                    'completed': '已完成',
+                    'progress': '生产中',
+                    'pending': '待排产',
+                    'paused': '已暂停'
+                }[order.status] || '未知';
+                
+                return `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.product}</td>
+                        <td>${order.customer}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${order.progress}%"></div>
+                            </div>
+                            <span style="font-size: 10px;">${order.progress}%</span>
+                        </td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function renderDeviceGrid() {
+            const grid = document.getElementById('device-grid');
+            grid.innerHTML = productionData.devices.map(device => {
+                const statusDot = {
+                    'running': 'status-running',
+                    'idle': 'status-idle',
+                    'fault': 'status-fault',
+                    'maintain': 'status-maintain'
+                }[device.status];
+                
+                const utilColor = device.util >= 90 ? 'var(--industrial-success)' : 
+                                  device.util >= 70 ? 'var(--industrial-accent)' : 
+                                  'var(--industrial-warning)';
+                
+                return `
+                    <div class="device-item">
+                        <div class="device-name" title="${device.name}">
+                            <span class="device-status-dot ${statusDot}"></span>
+                            ${device.name}
+                        </div>
+                        <div class="device-util" style="color: ${utilColor}">${device.util}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderEmployeeList() {
+            const list = document.getElementById('employee-list');
+            list.innerHTML = productionData.employees.map(emp => `
+                <div class="employee-item">
+                    <div class="employee-rank">${emp.rank}</div>
+                    <div class="employee-name">${emp.name}</div>
+                    <div class="employee-output">${emp.output} 件</div>
+                </div>
+            `).join('');
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // 图表初始化
+        // ═══════════════════════════════════════════════════════════
+        function initCharts() {
+            initProcessChart();
+            initDevicePieChart();
+            initTrendChart();
+            initProductChart();
+            initDefectChart();
+        }
+        
+        function initProcessChart() {
+            const chart = echarts.init(document.getElementById('process-chart'));
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { 
+                    type: 'category',
+                    data: productionData.processes.map(p => p.name),
+                    axisLabel: { color: '#8f9bb3', fontSize: 10, rotate: 30 },
+                    axisLine: { lineStyle: { color: '#2a5a8c' } }
+                },
+                yAxis: { 
+                    type: 'value',
+                    max: 100,
+                    axisLabel: { color: '#8f9bb3', formatter: '{value}%' },
+                    splitLine: { lineStyle: { color: 'rgba(42, 90, 140, 0.3)' } }
+                },
+                series: [{
+                    type: 'bar',
+                    data: productionData.processes.map(p => p.rate),
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#00b4d8' },
+                            { offset: 1, color: '#1a3a5c' }
+                        ]),
+                        borderRadius: [4, 4, 0, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}%',
+                        color: '#00d68f',
+                        fontSize: 10
+                    }
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initDevicePieChart() {
+            const chart = echarts.init(document.getElementById('device-pie-chart'));
+            const running = productionData.devices.filter(d => d.status === 'running').length;
+            const idle = productionData.devices.filter(d => d.status === 'idle').length;
+            const fault = productionData.devices.filter(d => d.status === 'fault').length;
+            const maintain = productionData.devices.filter(d => d.status === 'maintain').length;
+            
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'item', formatter: '{b}: {c}台 ({d}%)' },
+                legend: {
+                    orient: 'vertical',
+                    right: 10,
+                    top: 'center',
+                    textStyle: { color: '#8f9bb3', fontSize: 11 }
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 6, borderColor: '#0a1628', borderWidth: 2 },
+                    label: { show: false },
+                    data: [
+                        { value: running, name: '运行中', itemStyle: { color: '#00d68f' } },
+                        { value: idle, name: '待料', itemStyle: { color: '#ffaa00' } },
+                        { value: fault, name: '故障', itemStyle: { color: '#ff3d71' } },
+                        { value: maintain, name: '维护', itemStyle: { color: '#8f9bb3' } }
+                    ]
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initTrendChart() {
+            const chart = echarts.init(document.getElementById('trend-chart'));
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'axis' },
+                legend: {
+                    data: ['计划产量', '实际产量'],
+                    textStyle: { color: '#8f9bb3' },
+                    top: 0
+                },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: productionData.daily.map(d => d.date),
+                    axisLabel: { color: '#8f9bb3' },
+                    axisLine: { lineStyle: { color: '#2a5a8c' } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#8f9bb3' },
+                    splitLine: { lineStyle: { color: 'rgba(42, 90, 140, 0.3)' } }
+                },
+                series: [
+                    {
+                        name: '计划产量',
+                        type: 'line',
+                        data: productionData.daily.map(d => d.plan),
+                        lineStyle: { color: '#ffaa00', type: 'dashed' },
+                        itemStyle: { color: '#ffaa00' }
+                    },
+                    {
+                        name: '实际产量',
+                        type: 'line',
+                        data: productionData.daily.map(d => d.actual),
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(0, 180, 216, 0.3)' },
+                                { offset: 1, color: 'rgba(0, 180, 216, 0.05)' }
+                            ])
+                        },
+                        lineStyle: { color: '#00b4d8', width: 2 },
+                        itemStyle: { color: '#00b4d8' }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initProductChart() {
+            const chart = echarts.init(document.getElementById('product-chart'));
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'item', formatter: '{b}: {c}件 ({d}%)' },
+                series: [{
+                    type: 'pie',
+                    radius: '65%',
+                    data: [
+                        { value: 3500, name: '连接器', itemStyle: { color: '#00b4d8' } },
+                        { value: 2800, name: '传感器', itemStyle: { color: '#00d68f' } },
+                        { value: 2200, name: '继电器', itemStyle: { color: '#ffaa00' } },
+                        { value: 1800, name: '控制板', itemStyle: { color: '#ff3d71' } },
+                        { value: 1200, name: '其他', itemStyle: { color: '#8f9bb3' } }
+                    ],
+                    label: { color: '#8f9bb3', fontSize: 10 }
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initDefectChart() {
+            const chart = echarts.init(document.getElementById('defect-chart'));
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'value',
+                    axisLabel: { color: '#8f9bb3' },
+                    splitLine: { lineStyle: { color: 'rgba(42, 90, 140, 0.3)' } }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['焊接不良', '尺寸偏差', '外观缺陷', '功能异常', '包装损坏'],
+                    axisLabel: { color: '#8f9bb3', fontSize: 10 },
+                    axisLine: { lineStyle: { color: '#2a5a8c' } }
+                },
+                series: [{
+                    type: 'bar',
+                    data: [45, 32, 28, 18, 12],
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#ff3d71' },
+                            { offset: 1, color: '#ffaa00' }
+                        ]),
+                        borderRadius: [0, 4, 4, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'right',
+                        color: '#ff3d71',
+                        fontSize: 10
+                    }
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // AI 对话功能
+        // ═══════════════════════════════════════════════════════════
+        function initAI() {
+            const toggle = document.getElementById('ai-toggle');
+            const modal = document.getElementById('ai-modal');
+            const close = document.getElementById('ai-close');
+            const input = document.getElementById('ai-input');
+            const send = document.getElementById('ai-send');
+            const messages = document.getElementById('ai-messages');
+            
+            toggle.addEventListener('click', () => modal.classList.toggle('active'));
+            close.addEventListener('click', () => modal.classList.remove('active'));
+            
+            send.addEventListener('click', sendMessage);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            
+            function sendMessage() {
+                const question = input.value.trim();
+                if (!question) return;
+                
+                // 添加用户消息
+                messages.innerHTML += `<div class="ai-message user">${question}</div>`;
+                input.value = '';
+                
+                // 生成回答
+                setTimeout(() => {
+                    const answer = generateAnswer(question);
+                    messages.innerHTML += `<div class="ai-message bot">${answer}</div>`;
+                    messages.scrollTop = messages.scrollHeight;
+                }, 500);
+            }
+            
+            function generateAnswer(question) {
+                const q = question.toLowerCase();
+                
+                // 今日产量
+                if (q.includes('今日') && (q.includes('产量') || q.includes('完工'))) {
+                    return `今日完工数为 <strong>8,560</strong> 件，较昨日增长 5.2%。其中良品 8,320 件，直通率 97.2%。`;
+                }
+                
+                // 本月产量
+                if (q.includes('本月') && (q.includes('产量') || q.includes('完工'))) {
+                    return `本月累计完工 <strong>156,800</strong> 件，同比增长 12.5%。平均日产量约 5,226 件。`;
+                }
+                
+                // 直通率
+                if (q.includes('直通率') || q.includes('良品率')) {
+                    return `当前平均直通率为 <strong>97.2%</strong>。各工序中，包装入库直通率最高（99.5%），组装测试最低（96.8%）。建议重点关注组装测试工序的改进。`;
+                }
+                
+                // 设备
+                if (q.includes('设备') || q.includes('稼动率')) {
+                    const running = productionData.devices.filter(d => d.status === 'running').length;
+                    const fault = productionData.devices.filter(d => d.status === 'fault').length;
+                    return `设备平均稼动率 <strong>89.5%</strong>。当前 ${running} 台设备运行中，${fault} 台故障。故障设备：点胶机-2，建议尽快维修。`;
+                }
+                
+                // 订单
+                if (q.includes('订单')) {
+                    const completed = productionData.orders.filter(o => o.status === 'completed').length;
+                    const inProgress = productionData.orders.filter(o => o.status === 'progress').length;
+                    return `当前在制订单 <strong>${productionData.orders.length}</strong> 个。其中已完成 ${completed} 个，生产中 ${inProgress} 个。紧急订单：ORD-2026-1005（显示屏组件）。`;
+                }
+                
+                // 异常
+                if (q.includes('异常') || q.includes('故障') || q.includes('问题')) {
+                    return `今日异常 <strong>3</strong> 次，较昨日下降 12.5%。主要问题：<br>1. 点胶机-2 故障（已报修）<br>2. 产线C 缺料（已补料）<br>3. AOI检测机-2 待料调整`;
+                }
+                
+                // 员工
+                if (q.includes('员工') || q.includes('产量排行') || q.includes('绩效')) {
+                    const top = productionData.employees[0];
+                    return `今日产量排行：<br>🥇 ${productionData.employees[0].name} - ${productionData.employees[0].output} 件<br>🥈 ${productionData.employees[1].name} - ${productionData.employees[1].output} 件<br>🥉 ${productionData.employees[2].name} - ${productionData.employees[2].output} 件`;
+                }
+                
+                // 产线
+                if (q.includes('产线')) {
+                    return `5条产线运行状态：<br>• 产线A：正常运行，稼动率 94%<br>• 产线B：点胶机故障，稼动率 78%<br>• 产线C：正常运行，稼动率 91%<br>• 产线D：正常运行，稼动率 85%<br>• 产线E：正常运行，稼动率 89%`;
+                }
+                
+                // 帮助
+                if (q.includes('帮助') || q.includes('功能') || q.includes('能做什么')) {
+                    return `我可以回答以下问题：<br>• 今日/本月产量查询<br>• 设备稼动率、故障情况<br>• 订单完成状态<br>• 直通率、良品率<br>• 异常情况汇总<br>• 员工产量排行<br>• 各产线运行状态`;
+                }
+                
+                return `抱歉，我暂时无法回答这个问题。您可以尝试询问：<br>• "今日产量是多少？"<br>• "设备稼动率如何？"<br>• "有哪些异常情况？"<br>• "订单完成情况？"<br>输入"帮助"查看更多功能。`;
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // 文件上传
+        // ═══════════════════════════════════════════════════════════
+        function initFileUpload() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const status = document.getElementById('file-status');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--industrial-accent)';
+                uploadArea.style.background = 'rgba(0, 180, 216, 0.1)';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--card-border)';
+                uploadArea.style.background = 'transparent';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--card-border)';
+                uploadArea.style.background = 'transparent';
+                const file = e.dataTransfer.files[0];
+                if (file) processFile(file);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) processFile(file);
+            });
+            
+            function processFile(file) {
+                status.textContent = '正在读取文件...';
+                status.style.color = 'var(--industrial-warning)';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // 解析订单数据
+                        if (workbook.SheetNames.includes('订单数据')) {
+                            const ordersSheet = workbook.Sheets['订单数据'];
+                            const ordersJson = XLSX.utils.sheet_to_json(ordersSheet);
+                            productionData.orders = ordersJson.slice(0, 15).map(row => ({
+                                id: row['订单编号'] || '',
+                                product: row['产品名称'] || '',
+                                customer: row['客户名称'] || '',
+                                progress: Math.round((row['已完成数量'] || 0) / (row['订单数量'] || 1) * 100),
+                                status: row['订单状态'] === '已完成' ? 'completed' : 
+                                        row['订单状态'] === '生产中' ? 'progress' : 
+                                        row['订单状态'] === '待排产' ? 'pending' : 'progress'
+                            }));
+                        }
+                        
+                        // 解析工序数据
+                        if (workbook.SheetNames.includes('工序数据')) {
+                            const processSheet = workbook.Sheets['工序数据'];
+                            const processJson = XLSX.utils.sheet_to_json(processSheet);
+                            productionData.processes = processJson.map(row => ({
+                                name: row['工序名称'] || '',
+                                rate: Math.round((row['一次直通率'] || 0) * 1000) / 10
+                            }));
+                        }
+                        
+                        // 解析设备数据
+                        if (workbook.SheetNames.includes('设备数据')) {
+                            const deviceSheet = workbook.Sheets['设备数据'];
+                            const deviceJson = XLSX.utils.sheet_to_json(deviceSheet);
+                            productionData.devices = deviceJson.map(row => ({
+                                id: row['设备编号'] || '',
+                                name: row['设备名称'] || '',
+                                status: row['设备状态'] === '运行中' ? 'running' : 
+                                        row['设备状态'] === '待料' ? 'idle' : 
+                                        row['设备状态'] === '故障' ? 'fault' : 'maintain',
+                                util: Math.round((row['设备稼动率'] || 0) * 100)
+                            }));
+                        }
+                        
+                        // 解析员工数据
+                        if (workbook.SheetNames.includes('员工绩效')) {
+                            const empSheet = workbook.Sheets['员工绩效'];
+                            const empJson = XLSX.utils.sheet_to_json(empSheet);
+                            productionData.employees = empJson.sort((a, b) => (b['今日产量'] || 0) - (a['今日产量'] || 0))
+                                .slice(0, 5)
+                                .map((row, i) => ({
+                                    rank: i + 1,
+                                    name: row['姓名'] || '',
+                                    output: row['今日产量'] || 0
+                                }));
+                        }
+                        
+                        // 解析汇总数据
+                        if (workbook.SheetNames.includes('汇总统计')) {
+                            const summarySheet = workbook.Sheets['汇总统计'];
+                            const summaryJson = XLSX.utils.sheet_to_json(summarySheet);
+                            productionData.summary = {};
+                            summaryJson.forEach(row => {
+                                productionData.summary[row['指标名称']] = row['今日数据'];
+                            });
+                            
+                            // 更新KPI
+                            if (productionData.summary['生产总量(件)']) {
+                                document.getElementById('kpi-today-output').textContent = 
+                                    productionData.summary['生产总量(件)'].toLocaleString();
+                            }
+                            if (productionData.summary['完工订单数']) {
+                                document.getElementById('kpi-orders').textContent = 
+                                    productionData.summary['完工订单数'];
+                            }
+                        }
+                        
+                        // 重新渲染
+                        renderAll();
+                        initCharts();
+                        
+                        status.textContent = `✓ 数据已更新！共解析 ${workbook.SheetNames.length} 个工作表`;
+                        status.style.color = 'var(--industrial-success)';
+                        
+                    } catch (err) {
+                        status.textContent = '✗ 文件解析失败：' + err.message;
+                        status.style.color = 'var(--industrial-danger)';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    </script>
+</body>
+</html>
