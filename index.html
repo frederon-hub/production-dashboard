@@ -323,131 +323,7 @@
         }
         
         /* AI 对话框 */
-        .ai-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--industrial-accent), var(--industrial-light));
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
         
-        .ai-button:hover {
-            transform: scale(1.1);
-        }
-        
-        .ai-modal {
-            display: none;
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            width: 400px;
-            height: 500px;
-            background: var(--industrial-dark);
-            border: 1px solid var(--industrial-accent);
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            z-index: 1001;
-            flex-direction: column;
-        }
-        
-        .ai-modal.active {
-            display: flex;
-        }
-        
-        .ai-header {
-            padding: 15px;
-            background: var(--industrial-blue);
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .ai-title {
-            font-family: 'Orbitron', monospace;
-            font-weight: 600;
-            color: var(--industrial-accent);
-        }
-        
-        .ai-close {
-            background: none;
-            border: none;
-            color: var(--industrial-text);
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        .ai-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-        }
-        
-        .ai-message {
-            margin-bottom: 12px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            max-width: 85%;
-        }
-        
-        .ai-message.user {
-            background: var(--industrial-accent);
-            color: #000;
-            margin-left: auto;
-        }
-        
-        .ai-message.bot {
-            background: var(--industrial-blue);
-            border: 1px solid var(--card-border);
-        }
-        
-        .ai-input-area {
-            padding: 15px;
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            gap: 10px;
-        }
-        
-        .ai-input {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--card-border);
-            border-radius: 6px;
-            padding: 10px;
-            color: var(--industrial-text);
-            font-size: 14px;
-        }
-        
-        .ai-input:focus {
-            outline: none;
-            border-color: var(--industrial-accent);
-        }
-        
-        .ai-send {
-            padding: 10px 20px;
-            background: var(--industrial-accent);
-            border: none;
-            border-radius: 6px;
-            color: #000;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-        
-        .ai-send:hover {
-            background: var(--industrial-success);
-        }
         
         /* 文件上传 */
         .upload-section {
@@ -1229,9 +1105,119 @@
             text-align: center;
         }
 
+    
+        /* ===== AI助手 ===== */
+        .ai-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1003;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .chat-box {
+            display: none;
+            width: 300px;
+            max-height: 320px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1a2a 100%);
+            border: 2px solid #4a9eff;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 40px rgba(74, 158, 255, 0.3);
+            overflow: hidden;
+        }
+        
+        .chat-box.open { display: block; animation: up 0.3s; }
+        
+        @keyframes up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-title {
+            color: #4a9eff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+        }
+        
+        .chat-status {
+            float: right;
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .chat-msgs {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        
+        .msg-u {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin: 6px 0;
+            font-size: 13px;
+            word-break: break-word;
+        }
+        
+        .msg-a {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e8e8e8;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin: 6px 0;
+            font-size: 13px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        
+        .msg-load {
+            color: #888;
+            font-style: italic;
+        }
+        
+        #avatar3d {
+            width: 100px;
+            height: 130px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        #avatar3d:hover { transform: scale(1.05); }
+        
+        .mic {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4a9eff 0%, #2563eb 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            margin-top: 6px;
+            box-shadow: 0 4px 20px rgba(74, 158, 255, 0.5);
+            transition: all 0.3s;
+        }
+        
+        .mic:hover { transform: scale(1.1); }
+        .mic.on { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); animation: pulse-mic 1s infinite; }
+        
+        @keyframes pulse-mic {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+        }
+        
+        .hint { font-size: 11px; color: #4a9eff; margin-top: 4px; }
+
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-</head>
+    </head>
 <body>
     <!-- 头部 -->
     <header class="header">
@@ -1355,16 +1341,23 @@
     </main>
     
     <!-- AI助手 -->
-    <div class="ai-container">
-        <div class="chat-panel" id="chatPanel">
+    <div class="ai-box">
+        <div class="chat-box" id="chatBox">
             <div class="chat-title">
                 🤖 产线AI助手
-                <span class="chat-status" id="chatStatus">点击开始</span>
+                <span class="chat-status" id="status">点击麦克风说话</span>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="msg-ai">你好！我是产线AI助手。点击麦克风问我关于看板的问题吧~</div>
+            <div class="chat-msgs" id="msgs">
+                <div class="msg-a">你好！我是产线AI助手。点击麦克风问我关于看板的问题~</div>
             </div>
         </div>
+        <canvas id="avatar3d"></canvas>
+        <button class="mic" id="micBtn">🎤</button>
+        <div class="hint">点我说话</div>
+    </div>
+
+    
+    
         <canvas id="avatar3d"></canvas>
         <button class="mic-btn" id="micBtn">🎤</button>
         <div class="hint">点麦克风说话</div>
@@ -1379,27 +1372,10 @@
     
     
     
-    <!-- 数字人对话框 -->
-    <div class="dh-dialog" id="dh-dialog">
-        <div class="dh-question" id="dh-question">正在聆听...</div>
-        <div class="dh-answer" id="dh-answer"></div>
-    </div>
+    
 
     
-    <!-- AI 对话按钮 -->
-    <button class="ai-button" id="ai-toggle">🤖</button>
     
-    <!-- AI 对话框 -->
-    <div class="ai-modal" id="ai-modal">
-        <div class="ai-header">
-            <span class="ai-title">智能问答助手</span>
-            <button class="ai-close" id="ai-close">×</button>
-        </div>
-        <div class="ai-messages" id="ai-messages">
-            <div class="ai-message bot">
-                您好！我是生产线智能助手，可以回答关于生产数据、订单状态、设备运行等问题。请问有什么可以帮您？
-            </div>
-        </div>
         <div class="ai-input-area">
             <input type="text" class="ai-input" id="ai-input" placeholder="输入您的问题...">
             <button class="ai-send" id="ai-send">发送</button>
@@ -1788,9 +1764,7 @@
             window.addEventListener('resize', () => chart.resize());
         }
         
-        // ═══════════════════════════════════════════════════════════
-        // AI 对话功能
-        // ═══════════════════════════════════════════════════════════
+        
         function initAI() {
             const toggle = document.getElementById('ai-toggle');
             const modal = document.getElementById('ai-modal');
@@ -2014,324 +1988,267 @@
     
         
         
+        
+    
         // ═══════════════════════════════════════════════════════════
-        // 3D卡通小男孩 + DeepSeek API
+        // 3D数字人 + DeepSeek API
         // ═══════════════════════════════════════════════════════════
         
-        // Three.js 3D场景
         let scene, camera, renderer, avatar, mouth, isSpeaking = false;
         
-        function init3DAvatar() {
-            const container = document.getElementById('avatar3d');
-            const w = 120, h = 150;
+        function init3D() {
+            const c = document.getElementById('avatar3d');
+            const w = 100, h = 130;
             
-            // 场景
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
             camera.position.set(0, 0.3, 3.5);
             
-            renderer = new THREE.WebGLRenderer({ canvas: container, alpha: true, antialias: true });
+            renderer = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true });
             renderer.setSize(w, h);
             renderer.setClearColor(0x000000, 0);
             
             // 灯光
-            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambient);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+            dl.position.set(2, 3, 2);
+            scene.add(dl);
             
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(2, 3, 2);
-            scene.add(light);
-            
-            const backLight = new THREE.DirectionalLight(0x4a9eff, 0.5);
-            backLight.position.set(-2, 1, -1);
-            scene.add(backLight);
-            
-            // 创建卡通小男孩
+            // 创建小男孩
             avatar = new THREE.Group();
             
-            // 头 - 发光材质
-            const headGeo = new THREE.SphereGeometry(0.5, 32, 32);
-            const skinMat = new THREE.MeshToonMaterial({ 
-                color: 0xffd9b3,
-                emissive: 0x332211,
-                emissiveIntensity: 0.05
-            });
-            const head = new THREE.Mesh(headGeo, skinMat);
-            head.position.y = 0.8;
+            // 头
+            const skinMat = new THREE.MeshToonMaterial({ color: 0xffd9b3 });
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 24, 24), skinMat);
+            head.position.y = 0.7;
             avatar.add(head);
             
-            // 头发 - 多个球体组合
+            // 头发
             const hairMat = new THREE.MeshToonMaterial({ color: 0x3d2314 });
-            
-            // 顶部头发
-            const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.52, 32, 32), hairMat);
-            hairTop.position.set(0, 0.85, -0.1);
-            hairTop.scale.set(1, 0.7, 0.9);
+            const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.48, 24, 24), hairMat);
+            hairTop.position.set(0, 0.75, -0.1);
+            hairTop.scale.set(1, 0.65, 0.85);
             avatar.add(hairTop);
             
             // 刘海
-            const bangs = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), hairMat);
-            bangs.position.set(0, 1.05, 0.35);
+            const bangs = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), hairMat);
+            bangs.position.set(0, 0.95, 0.32);
             avatar.add(bangs);
             
-            // 左侧头发
-            const hairL = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), hairMat);
-            hairL.position.set(-0.4, 0.85, 0.1);
-            avatar.add(hairL);
-            
-            // 右侧头发
-            const hairR = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), hairMat);
-            hairR.position.set(0.4, 0.85, 0.1);
-            avatar.add(hairR);
-            
-            // 眼睛 - 大而可爱
+            // 眼睛
             const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const eyePupilMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
             
-            // 左眼
             const eyeL = new THREE.Group();
-            const eyeWhiteL = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeWhiteMat);
-            const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), eyePupilMat);
-            pupilL.position.z = 0.05;
-            eyeL.add(eyeWhiteL);
+            eyeL.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), eyeWhiteMat));
+            const pupilL = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), eyePupilMat);
+            pupilL.position.z = 0.04;
             eyeL.add(pupilL);
-            eyeL.position.set(-0.15, 0.85, 0.42);
+            eyeL.position.set(-0.12, 0.75, 0.38);
             avatar.add(eyeL);
             
-            // 右眼
             const eyeR = new THREE.Group();
-            const eyeWhiteR = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeWhiteMat);
-            const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), eyePupilMat);
-            pupilR.position.z = 0.05;
-            eyeR.add(eyeWhiteR);
+            eyeR.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), eyeWhiteMat));
+            const pupilR = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), eyePupilMat);
+            pupilR.position.z = 0.04;
             eyeR.add(pupilR);
-            eyeR.position.set(0.15, 0.85, 0.42);
+            eyeR.position.set(0.12, 0.75, 0.38);
             avatar.add(eyeR);
             
-            // 嘴巴 - 会动
-            const mouthGeo = new THREE.SphereGeometry(0.06, 16, 16);
+            // 嘴巴
             const mouthMat = new THREE.MeshToonMaterial({ color: 0xcc6666 });
-            mouth = new THREE.Mesh(mouthGeo, mouthMat);
-            mouth.position.set(0, 0.6, 0.45);
-            mouth.scale.set(1.5, 0.5, 0.5);
+            mouth = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 16), mouthMat);
+            mouth.position.set(0, 0.52, 0.4);
+            mouth.scale.set(1.3, 0.4, 0.4);
             avatar.add(mouth);
             
             // 腮红
-            const blushMat = new THREE.MeshBasicMaterial({ 
-                color: 0xff9999, 
-                transparent: true, 
-                opacity: 0.5 
-            });
-            const blushL = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), blushMat);
-            blushL.position.set(-0.3, 0.7, 0.4);
+            const blushMat = new THREE.MeshBasicMaterial({ color: 0xff9999, transparent: true, opacity: 0.45 });
+            const blushL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), blushMat);
+            blushL.position.set(-0.25, 0.6, 0.35);
             avatar.add(blushL);
-            
-            const blushR = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), blushMat);
-            blushR.position.set(0.3, 0.7, 0.4);
+            const blushR = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 12), blushMat);
+            blushR.position.set(0.25, 0.6, 0.35);
             avatar.add(blushR);
             
-            // 身体 - 小衣服
-            const bodyGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.6, 16);
+            // 身体
             const bodyMat = new THREE.MeshToonMaterial({ color: 0x4a9eff });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 0.1;
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.35, 0.5, 16), bodyMat);
+            body.position.y = 0.05;
             avatar.add(body);
             
             // 衣领
-            const collarMat = new THREE.MeshToonMaterial({ color: 0xffffff });
-            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.32, 0.1, 16), collarMat);
-            collar.position.y = 0.35;
+            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.3, 0.08, 16), new THREE.MeshToonMaterial({ color: 0xffffff }));
+            collar.position.y = 0.28;
             avatar.add(collar);
             
             scene.add(avatar);
-            
-            // 动画循环
             animate();
         }
         
-        let blinkTimer = 0;
+        let blinkT = 0;
         function animate() {
             requestAnimationFrame(animate);
-            
             const t = Date.now() * 0.001;
             
-            // 轻微摇摆
-            avatar.rotation.y = Math.sin(t * 0.8) * 0.15;
-            avatar.position.y = Math.sin(t * 1.5) * 0.03;
+            avatar.rotation.y = Math.sin(t * 0.7) * 0.12;
+            avatar.position.y = Math.sin(t * 1.3) * 0.025;
             
-            // 说话时嘴巴动
             if (isSpeaking) {
-                mouth.scale.y = 0.5 + Math.sin(t * 15) * 0.4;
+                mouth.scale.y = 0.4 + Math.sin(t * 12) * 0.35;
             } else {
-                mouth.scale.y = 0.5;
+                mouth.scale.y = 0.4;
             }
             
-            // 眨眼（通过缩放眼睛Y轴）
-            blinkTimer += 0.016;
-            if (blinkTimer > 3 && blinkTimer < 3.15) {
-                avatar.children[4].scale.y = 0.1; // eyeL
-                avatar.children[5].scale.y = 0.1; // eyeR
-            } else if (blinkTimer > 3.15) {
+            blinkT += 0.016;
+            if (blinkT > 3 && blinkT < 3.12) {
+                avatar.children[3].scale.y = 0.1;
+                avatar.children[4].scale.y = 0.1;
+            } else if (blinkT > 3.12) {
+                avatar.children[3].scale.y = 1;
                 avatar.children[4].scale.y = 1;
-                avatar.children[5].scale.y = 1;
-                blinkTimer = 0;
+                blinkT = 0;
             }
             
             renderer.render(scene, camera);
         }
         
-        // 语音识别与AI
-        const ai = {
+        // AI逻辑
+        const AI = {
             key: 'sk-b2f9806b2ccd4d6c86d39ae62ac6eb5f',
-            recognition: null,
+            rec: null,
             
             init() {
-                init3DAvatar();
+                init3D();
                 
-                // 语音识别
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognition = new SR();
-                    this.recognition.lang = 'zh-CN';
-                    this.recognition.continuous = false;
-                    this.recognition.interimResults = true;
+                    this.rec = new SR();
+                    this.rec.lang = 'zh-CN';
+                    this.rec.continuous = false;
+                    this.rec.interimResults = true;
                     
-                    this.recognition.onresult = (e) => {
+                    this.rec.onresult = (e) => {
                         const text = e.results[0][0].transcript;
-                        document.getElementById('chatStatus').textContent = '识别中...';
+                        document.getElementById('status').textContent = '识别中: ' + text;
                         
-                        const msgDiv = document.querySelector('.msg-user');
-                        if (msgDiv) {
-                            msgDiv.textContent = '🗣️ ' + text;
-                        } else {
-                            const div = document.createElement('div');
-                            div.className = 'msg-user';
-                            div.textContent = '🗣️ ' + text;
-                            document.getElementById('chatMessages').appendChild(div);
+                        // 显示用户说的话
+                        let userMsg = document.querySelector('.msg-u');
+                        if (!userMsg) {
+                            userMsg = document.createElement('div');
+                            userMsg.className = 'msg-u';
+                            document.getElementById('msgs').appendChild(userMsg);
                         }
+                        userMsg.textContent = '🗣️ ' + text;
                         
                         if (e.results[0].isFinal) {
-                            this.askAI(text);
+                            this.ask(text);
                         }
                     };
                     
-                    this.recognition.onerror = (e) => {
-                        console.error('语音识别错误:', e.error);
-                        document.getElementById('chatStatus').textContent = '识别失败';
-                        this.stopRecord();
+                    this.rec.onerror = (e) => {
+                        console.error('识别错误:', e.error);
+                        document.getElementById('status').textContent = '识别失败，重试';
+                        this.stop();
                     };
                     
-                    this.recognition.onend = () => {
-                        this.stopRecord();
-                    };
+                    this.rec.onend = () => this.stop();
                 }
                 
-                document.getElementById('micBtn').onclick = () => this.toggleRecord();
+                document.getElementById('micBtn').onclick = () => this.toggle();
             },
             
-            toggleRecord() {
-                if (document.getElementById('micBtn').classList.contains('recording')) {
-                    this.stopRecord();
+            toggle() {
+                if (document.getElementById('micBtn').classList.contains('on')) {
+                    this.stop();
                 } else {
-                    this.startRecord();
+                    this.start();
                 }
             },
             
-            startRecord() {
-                if (!this.recognition) {
-                    alert('浏览器不支持语音识别，请用Chrome');
+            start() {
+                if (!this.rec) {
+                    alert('请用Chrome浏览器');
                     return;
                 }
                 
-                document.getElementById('chatPanel').classList.add('active');
-                document.getElementById('micBtn').classList.add('recording');
-                document.getElementById('chatStatus').textContent = '请说话...';
+                document.getElementById('chatBox').classList.add('open');
+                document.getElementById('micBtn').classList.add('on');
+                document.getElementById('status').textContent = '🎤 请说话...';
                 
-                try { this.recognition.start(); } catch(e) {}
+                try { this.rec.start(); } catch(e) { console.error(e); }
             },
             
-            stopRecord() {
-                document.getElementById('micBtn').classList.remove('recording');
-                document.getElementById('chatStatus').textContent = '点击麦克风';
-                try { this.recognition.stop(); } catch(e) {}
+            stop() {
+                document.getElementById('micBtn').classList.remove('on');
+                document.getElementById('status').textContent = '点击麦克风说话';
+                try { this.rec.stop(); } catch(e) {}
             },
             
-            async askAI(q) {
-                document.getElementById('chatStatus').textContent = '思考中...';
+            async ask(q) {
+                document.getElementById('status').textContent = '🤔 思考中...';
                 
                 // 加载提示
-                let loadingDiv = document.querySelector('.msg-loading');
-                if (!loadingDiv) {
-                    loadingDiv = document.createElement('div');
-                    loadingDiv.className = 'msg-ai msg-loading';
-                    document.getElementById('chatMessages').appendChild(loadingDiv);
-                }
-                loadingDiv.textContent = '💭 思考中...';
+                let loadDiv = document.createElement('div');
+                loadDiv.className = 'msg-a msg-load';
+                loadDiv.textContent = '💭 思考中...';
+                document.getElementById('msgs').appendChild(loadDiv);
                 
-                // 构建上下文
-                const context = [
-                    '当前产线看板数据:',
+                const ctx = [
+                    '产线看板数据:',
                     '今日完工8560件,良品8320件,直通率97.2%',
                     '本月累计156800件',
                     '设备稼动率89.5%,5台运行,1台故障(点胶机-2)',
-                    '在制订单12个,完成8个',
-                    '今日异常:点胶机故障/产线C缺料/AOI待料',
-                    '员工产量冠军:王伟126件,第二李明112件'
+                    '员工产量冠军:王伟126件'
                 ].join('\n');
                 
-                const body = {
-                    model: 'deepseek-chat',
-                    messages: [
-                        { role: 'system', content: '你是产线AI助手,简洁回答。\n' + context },
-                        { role: 'user', content: q }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 150
-                };
-                
                 try {
-                    // 使用CORS代理
-                    const proxyUrl = 'https://corsproxy.io/?';
-                    const apiurl = encodeURIComponent('https://api.deepseek.com/chat/completions');
-                    
-                    const res = await fetch(proxyUrl + apiurl, {
+                    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.deepseek.com/chat/completions'), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': 'Bearer ' + this.key
                         },
-                        body: JSON.stringify(body)
+                        body: JSON.stringify({
+                            model: 'deepseek-chat',
+                            messages: [
+                                { role: 'system', content: '你是产线AI助手,简洁回答,不超过80字。\n' + ctx },
+                                { role: 'user', content: q }
+                            ],
+                            temperature: 0.7,
+                            max_tokens: 120
+                        })
                     });
                     
                     const data = await res.json();
-                    loadingDiv.remove();
+                    loadDiv.remove();
                     
                     if (data.choices && data.choices[0]) {
-                        const answer = data.choices[0].message.content;
-                        this.showAnswer(answer);
-                        this.speak(answer);
+                        const ans = data.choices[0].message.content;
+                        this.show(ans);
+                        this.say(ans);
                     } else {
-                        this.showAnswer('抱歉,返回数据异常');
+                        this.show('API返回异常');
                     }
                 } catch (err) {
-                    loadingDiv.remove();
-                    this.showAnswer('网络错误: ' + err.message);
+                    loadDiv.remove();
+                    this.show('网络错误: ' + err.message);
                     console.error(err);
                 }
                 
-                document.getElementById('chatStatus').textContent = '完成';
+                document.getElementById('status').textContent = '完成';
             },
             
-            showAnswer(text) {
+            show(text) {
                 const div = document.createElement('div');
-                div.className = 'msg-ai';
+                div.className = 'msg-a';
                 div.innerHTML = text.replace(/\n/g, '<br>');
-                const box = document.getElementById('chatMessages');
+                const box = document.getElementById('msgs');
                 box.appendChild(div);
                 box.scrollTop = box.scrollHeight;
             },
             
-            speak(text) {
+            say(text) {
                 isSpeaking = true;
                 const u = new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g, ''));
                 u.lang = 'zh-CN';
@@ -2342,7 +2259,7 @@
             }
         };
         
-        ai.init();
+        AI.init();
     </script>
 </body>
 </html>
