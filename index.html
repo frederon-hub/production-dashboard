@@ -659,6 +659,139 @@
             }
         }
 
+    
+        /* ===== 数字人样式 ===== */
+        .digital-human {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 1002;
+            cursor: pointer;
+        }
+        
+        .dh-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00b4d8 0%, #1a3a5c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .dh-avatar::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--industrial-accent);
+            animation: dh-pulse 2s infinite;
+        }
+        
+        @keyframes dh-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+        
+        .dh-avatar.listening {
+            animation: dh-listening 0.5s infinite;
+        }
+        
+        @keyframes dh-listening {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .dh-avatar.speaking {
+            animation: dh-speaking 0.3s infinite;
+        }
+        
+        @keyframes dh-speaking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        
+        .dh-ring {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--industrial-accent);
+            animation: dh-spin 1.5s linear infinite;
+            top: -10px;
+            left: -10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .digital-human.active .dh-ring {
+            opacity: 1;
+        }
+        
+        @keyframes dh-spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .dh-status {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--industrial-accent);
+            white-space: nowrap;
+            background: var(--industrial-dark);
+            padding: 2px 8px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .digital-human.active .dh-status {
+            opacity: 1;
+        }
+        
+        /* 语音悬浮窗 */
+        .dh-dialog {
+            display: none;
+            position: fixed;
+            bottom: 200px;
+            left: 20px;
+            width: 280px;
+            background: var(--industrial-dark);
+            border: 1px solid var(--industrial-accent);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 1003;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .dh-dialog.active {
+            display: block;
+        }
+        
+        .dh-question {
+            color: var(--industrial-accent);
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        
+        .dh-answer {
+            color: var(--industrial-text);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
     </style>
 </head>
 <body>
@@ -782,6 +915,20 @@
             </div>
         </div>
     </main>
+    
+    <!-- 数字人 -->
+    <div class="digital-human" id="digital-human">
+        <div class="dh-ring"></div>
+        <div class="dh-avatar" id="dh-avatar">👤</div>
+        <div class="dh-status" id="dh-status">点击对话</div>
+    </div>
+    
+    <!-- 数字人对话框 -->
+    <div class="dh-dialog" id="dh-dialog">
+        <div class="dh-question" id="dh-question">正在聆听...</div>
+        <div class="dh-answer" id="dh-answer"></div>
+    </div>
+
     
     <!-- AI 对话按钮 -->
     <button class="ai-button" id="ai-toggle">🤖</button>
@@ -1408,6 +1555,180 @@
                 reader.readAsArrayBuffer(file);
             }
         }
+    
+        // ═══════════════════════════════════════════════════════════
+        // 数字人语音功能
+        // ═══════════════════════════════════════════════════════════
+        const digitalHuman = {
+            recognition: null,
+            synthesis: window.speechSynthesis,
+            isListening: false,
+            
+            init() {
+                // 初始化语音识别
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.lang = 'zh-CN';
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = true;
+                    
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        document.getElementById('dh-question').textContent = '您说：' + transcript;
+                        
+                        if (event.results[0].isFinal) {
+                            this.processCommand(transcript);
+                        }
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.log('Speech recognition error:', event.error);
+                        this.setStatus('语音识别失败');
+                        this.stopListening();
+                    };
+                    
+                    this.recognition.onend = () => {
+                        if (this.isListening) {
+                            this.stopListening();
+                        }
+                    };
+                }
+                
+                // 绑定点击事件
+                document.getElementById('digital-human').addEventListener('click', () => {
+                    if (this.isListening) {
+                        this.stopListening();
+                    } else {
+                        this.startListening();
+                    }
+                });
+            },
+            
+            startListening() {
+                if (!this.recognition) {
+                    this.showAnswer('您的浏览器不支持语音识别，请使用Chrome浏览器。');
+                    return;
+                }
+                
+                this.isListening = true;
+                document.getElementById('digital-human').classList.add('active');
+                document.getElementById('dh-avatar').classList.add('listening');
+                document.getElementById('dh-dialog').classList.add('active');
+                document.getElementById('dh-question').textContent = '正在聆听...';
+                document.getElementById('dh-answer').textContent = '';
+                this.setStatus('正在聆听');
+                
+                try {
+                    this.recognition.start();
+                } catch (e) {
+                    console.log('Recognition already started');
+                }
+            },
+            
+            stopListening() {
+                this.isListening = false;
+                document.getElementById('dh-avatar').classList.remove('listening');
+                this.setStatus('点击对话');
+                
+                try {
+                    this.recognition.stop();
+                } catch (e) {}
+            },
+            
+            setStatus(text) {
+                document.getElementById('dh-status').textContent = text;
+            },
+            
+            showAnswer(text) {
+                document.getElementById('dh-answer').innerHTML = text;
+            },
+            
+            processCommand(text) {
+                document.getElementById('dh-avatar').classList.remove('listening');
+                document.getElementById('dh-avatar').classList.add('speaking');
+                
+                const answer = this.generateAnswer(text);
+                this.showAnswer(answer);
+                
+                // 语音播报（可选）
+                this.speak(answer.replace(/<[^>]+>/g, '').replace(/\n/g, ' '));
+                
+                setTimeout(() => {
+                    document.getElementById('dh-avatar').classList.remove('speaking');
+                }, 2000);
+            },
+            
+            speak(text) {
+                if (this.synthesis) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-CN';
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    this.synthesis.speak(utterance);
+                }
+            },
+            
+            generateAnswer(question) {
+                const q = question.toLowerCase();
+                
+                // 今日产量
+                if (q.includes('今日') && (q.includes('产量') || q.includes('完工'))) {
+                    return '今日完工数8,560件，较昨日增长5.2%。<br>其中良品8,320件，直通率97.2%。';
+                }
+                
+                // 本月产量
+                if (q.includes('本月') && (q.includes('产量') || q.includes('完工'))) {
+                    return '本月累计完工156,800件，同比增长12.5%。<br>平均日产量约5,226件。';
+                }
+                
+                // 直通率
+                if (q.includes('直通率') || q.includes('良品率')) {
+                    return '当前平均直通率97.2%。<br>包装入库最高99.5%，组装测试最低96.8%。';
+                }
+                
+                // 设备
+                if (q.includes('设备') || q.includes('稼动率')) {
+                    const running = productionData.devices.filter(d => d.status === 'running').length;
+                    const fault = productionData.devices.filter(d => d.status === 'fault').length;
+                    return '设备稼动率89.5%。<br>' + running + '台运行中，' + fault + '台故障。<br>故障设备：点胶机-2。';
+                }
+                
+                // 订单
+                if (q.includes('订单')) {
+                    const total = productionData.orders.length;
+                    const completed = productionData.orders.filter(o => o.status === 'completed').length;
+                    return '当前在制订单' + total + '个。<br>已完成' + completed + '个，生产中' + (total - completed) + '个。';
+                }
+                
+                // 异常
+                if (q.includes('异常') || q.includes('故障') || q.includes('问题')) {
+                    return '今日异常3次。<br>1.点胶机-2故障<br>2.产线C缺料<br>3.AOI检测机待料';
+                }
+                
+                // 员工
+                if (q.includes('员工') || q.includes('排行') || q.includes('产量')) {
+                    const top = productionData.employees[0];
+                    return '今日产量冠军：' + top.name + '，' + top.output + '件。<br>第二名：' + productionData.employees[1].name + '，' + productionData.employees[1].output + '件。';
+                }
+                
+                // 产线
+                if (q.includes('产线')) {
+                    return '5条产线运行中。<br>产线A稼动率94%<br>产线B稼动率78%（点胶机故障）<br>其余产线正常。';
+                }
+                
+                // 帮助
+                if (q.includes('帮') || q.includes('什么') || q.includes('功能')) {
+                    return '我可以回答：<br>• 今日/本月产量<br>• 设备稼动率<br>• 订单状态<br>• 直通率<br>• 异常情况<br>• 员工排行';
+                }
+                
+                return '您可以问我：<br>• "今日产量"<br>• "设备稼动率"<br>• "订单情况"<br>• "有哪些异常"';
+            }
+        };
+        
+        // 初始化数字人
+        digitalHuman.init();
+        
     </script>
 </body>
 </html>
