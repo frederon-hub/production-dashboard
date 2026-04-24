@@ -510,6 +510,89 @@
         .card {
             animation: slideIn 0.5s ease forwards;
         }
+
+        /* 手机端适配 */
+        @media screen and (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 10px 15px;
+                gap: 10px;
+            }
+            .header-title {
+                font-size: 18px;
+                letter-spacing: 1px;
+            }
+            .header-info {
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+            .header-time {
+                font-size: 18px;
+            }
+            .main-container {
+                padding: 10px;
+                grid-template-columns: 1fr;
+            }
+            .kpi-section,
+            .order-section,
+            .equipment-section,
+            .quality-section,
+            .production-section,
+            .employee-section,
+            .chart-card {
+                grid-column: 1 !important;
+            }
+            .kpi-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .kpi-card {
+                padding: 10px;
+            }
+            .kpi-value {
+                font-size: 24px;
+            }
+            .order-row {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .order-id {
+                font-size: 12px;
+            }
+            .equipment-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .card {
+                padding: 10px;
+            }
+            .card-title {
+                font-size: 14px;
+            }
+            .upload-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .upload-area {
+                padding: 15px;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            .kpi-cards {
+                grid-template-columns: 1fr;
+            }
+            .equipment-grid {
+                grid-template-columns: 1fr;
+            }
+            .header-title {
+                font-size: 14px;
+            }
+            .header-time {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
